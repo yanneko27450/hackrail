@@ -1454,6 +1454,7 @@
       <div class="nickname-bar">
         <span class="nickname-label">暱稱</span>
         <input class="nickname-input" id="nickname-input" placeholder="設定你的暱稱..." maxlength="16"
+          oninput="saveNickname()"
           onkeydown="if(event.key==='Enter')saveNickname()">
         <button class="btn-nick" id="btn-nick" onclick="saveNickname()">設定</button>
         <button class="btn-nick" style="background:var(--green);margin-left:2px" onclick="exportMsgs()" title="匯出討論給 AI">📥</button>
@@ -1566,14 +1567,7 @@ function sendMsg() {
   const text = document.getElementById('msg-input').value.trim();
   if (!text) { document.getElementById('msg-input').focus(); return; }
   if (!myUid) { alert('Firebase 尚未連線，請稍候再試'); return; }
-  const nick = getNickname();
-  if (!nick) {
-    document.getElementById('nickname-input').focus();
-    document.getElementById('nickname-input').style.borderColor = 'var(--red)';
-    setTimeout(() => document.getElementById('nickname-input').style.borderColor = '', 1500);
-    alert('請先設定你的暱稱');
-    return;
-  }
+  const nick = getNickname() || '匿名';
   const msg = { uid: myUid, nickname: nick, text, ts: Date.now() };
   if (currentQuote) {
     msg.refId = currentQuote.id || '';
