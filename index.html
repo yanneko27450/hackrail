@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HackRail 林鐵 × 糖鐵 研究報告</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #4f8ef7;
+    --accent2: #e8a838;
+    --green: #3ecf8e;
+    --red: #f75f5f;
+    --yellow: #f7c948;
+    --text: #e2e8f0;
+    --muted: #7c8aaa;
+    --highlight-bg: rgba(79,142,247,0.15);
+    --highlight-border: #4f8ef7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* TOP BAR */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .topbar h1 { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar .badge { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .hint { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+  /* LAYOUT */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width: 180px; background: var(--surface); border-right: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; padding: 12px 0; }
+  .sidebar-group { margin-bottom: 16px; }
+  .sidebar-group-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 14px 6px; }
+  .tab-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 14px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; text-align: left; transition: all 0.15s; border-left: 2px solid transparent; }
+  .tab-btn:hover { background: var(--surface2); color: var(--text); }
+  .tab-btn.active { background: var(--surface2); color: var(--accent); border-left-color: var(--accent); }
+  .tab-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .section-subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+  .tag-blue { background: rgba(79,142,247,0.2); color: var(--accent); }
+  .tag-yellow { background: rgba(232,168,56,0.2); color: var(--accent2); }
+  .tag-green { background: rgba(62,207,142,0.2); color: var(--green); }
+  .tag-red { background: rgba(247,95,95,0.2); color: var(--red); }
+
+  /* DATA LINES — clickable */
+  .data-line { display: flex; align-items: flex-start; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; margin-bottom: 2px; }
+  .data-line:hover { background: var(--surface2); }
+  .data-line.pinned { background: var(--highlight-bg); border-left-color: var(--highlight-border); }
+  .data-line .dl-icon { flex-shrink: 0; margin-top: 2px; font-size: 13px; }
+  .data-line .dl-text { flex: 1; line-height: 1.6; }
+  .data-line .dl-label { font-size: 10px; color: var(--muted); flex-shrink: 0; margin-top: 3px; }
+
+  /* TABLE */
+  .info-table { width: 100%; border-collapse: collapse; }
+  .info-table th { background: var(--surface2); color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .info-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.6; }
+  .info-table tr:last-child td { border-bottom: none; }
+  .info-table tr.clickable-row { cursor: pointer; }
+  .info-table tr.clickable-row:hover td { background: var(--surface2); }
+  .info-table tr.clickable-row.pinned td { background: var(--highlight-bg); border-left: 2px solid var(--highlight-border); }
+
+  /* SEVERITY */
+  .sev { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .sev-high { background: rgba(247,95,95,0.2); color: var(--red); }
+  .sev-med { background: rgba(247,201,72,0.2); color: var(--yellow); }
+  .sev-low { background: rgba(62,207,142,0.2); color: var(--green); }
+
+  /* DISCUSSION PANEL */
+  .discussion-panel { width: 320px; background: var(--surface); border-left: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .dp-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .dp-header h3 { font-size: 13px; font-weight: 600; }
+  .dp-count { font-size: 11px; background: var(--accent); color: #fff; padding: 1px 7px; border-radius: 10px; }
+  .dp-empty { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--muted); font-size: 13px; }
+  .dp-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .dp-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .dp-item-text { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; border-left: 2px solid var(--accent); padding-left: 8px; }
+  .dp-item-source { font-size: 10px; color: var(--accent); margin-bottom: 8px; }
+  .dp-notes { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-size: 12px; padding: 7px; resize: vertical; min-height: 60px; outline: none; font-family: inherit; transition: border 0.15s; }
+  .dp-notes:focus { border-color: var(--accent); }
+  .dp-item-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+  .btn-sm { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 3px 9px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.danger:hover { border-color: var(--red); color: var(--red); }
+  .dp-toolbar { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .dp-toolbar button { flex: 1; padding: 7px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s; }
+  .btn-export { background: var(--surface2); color: var(--text); }
+  .btn-export:hover { border-color: var(--green); color: var(--green); }
+  .btn-clear { background: var(--surface2); color: var(--muted); }
+  .btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat-box .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* PANEL TABS */
+  .panel-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .panel-tab { flex: 1; padding: 10px; background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .panel-tab:hover { color: var(--text); }
+  .panel-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .panel-pane.active { display: flex; }
+
+  /* GAP INPUT */
+  .gap-form { padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 7px; }
+  .gap-select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-size: 12px; padding: 6px 8px; outline: none; }
+  .gap-select:focus { border-color: var(--accent); }
+  .gap-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-size: 12px; padding: 6px 8px; outline: none; font-family: inherit; resize: vertical; min-height: 56px; }
+  .gap-input:focus { border-color: var(--accent); }
+  .btn-add { width: 100%; padding: 7px; background: var(--accent); color: #fff; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; transition: opacity 0.15s; }
+  .btn-add:hover { opacity: 0.85; }
+  .gap-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .gap-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+  .gap-item.done { opacity: 0.5; }
+  .gap-item .gap-area-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(251,146,60,0.2); color: #fb923c; display: inline-block; margin-bottom: 5px; }
+  .gap-item .gap-desc { font-size: 12px; line-height: 1.5; color: var(--text); margin-bottom: 8px; }
+  .gap-item.done .gap-desc { text-decoration: line-through; color: var(--muted); }
+  .gap-item .gap-actions { display: flex; gap: 5px; }
+  .btn-done { flex: 1; background: none; border: 1px solid var(--green); color: var(--green); font-size: 11px; padding: 3px 7px; border-radius: 4px; cursor: pointer; }
+  .btn-done.undone { border-color: var(--border); color: var(--muted); }
+  .gap-empty { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--muted); font-size: 13px; }
+  .gap-count { font-size: 11px; background: #fb923c; color: #fff; padding: 1px 7px; border-radius: 10px; }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .discussion-panel { width: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>HackRail 鐵客松 — 林鐵 × 糖鐵 研究報告</h1>
+  <span class="badge">概念創新組</span>
+  <span class="hint">💡 點擊任何資料行 → 加入右側討論區標註</span>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">阿里山林鐵</div>
+      <button class="tab-btn active" onclick="switchTab('lintie-overview')">
+        <span class="dot" style="background:#4f8ef7"></span>基本現狀
+      </button>
+      <button class="tab-btn" onclick="switchTab('lintie-issues')">
+        <span class="dot" style="background:#f75f5f"></span>已知問題
+      </button>
+      <button class="tab-btn" onclick="switchTab('lintie-data')">
+        <span class="dot" style="background:#3ecf8e"></span>可用資料
+      </button>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">台糖糖鐵</div>
+      <button class="tab-btn" onclick="switchTab('tangtie-overview')">
+        <span class="dot" style="background:#e8a838"></span>基本現狀
+      </button>
+      <button class="tab-btn" onclick="switchTab('tangtie-issues')">
+        <span class="dot" style="background:#f75f5f"></span>已知問題
+      </button>
+      <button class="tab-btn" onclick="switchTab('tangtie-data')">
+        <span class="dot" style="background:#3ecf8e"></span>可用資料
+      </button>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">比賽分析</div>
+      <button class="tab-btn" onclick="switchTab('competition')">
+        <span class="dot" style="background:#a78bfa"></span>題目對應
+      </button>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">現有研究</div>
+      <button class="tab-btn" onclick="switchTab('research')">
+        <span class="dot" style="background:#f472b6"></span>學術研究
+      </button>
+      <button class="tab-btn" onclick="switchTab('gap')">
+        <span class="dot" style="background:#fb923c"></span>研究空白
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- 林鐵 現狀 -->
+    <section id="lintie-overview" class="section active">
+      <div class="section-title">阿里山林業鐵路 — 基本現狀</div>
+      <div class="section-subtitle">林鐵全台唯一山岳齒軌鐵路，2025年7月6日完成全線通車</div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="stat-box"><div class="val">73 km</div><div class="lbl">嘉義→阿里山本線全長</div></div>
+        <div class="stat-box"><div class="val">2,216 m</div><div class="lbl">終點阿里山站海拔</div></div>
+        <div class="stat-box"><div class="val">4 班/日</div><div class="lbl">本線每日班次（上下山各2班）</div></div>
+        <div class="stat-box"><div class="val">6.25%</div><div class="lbl">最大坡度（全台鐵路之冠）</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">路線構成 <span class="tag tag-blue">基本資訊</span></div>
+        <div class="data-line" data-id="l1" data-src="林鐵路線" onclick="pinLine(this)">
+          <span class="dl-icon">🚂</span><span class="dl-text"><b>本線</b>：嘉義站 → 阿里山站，全長 73.1 km，行車約3.5小時，票價約 NT$844</span><span class="dl-label">本線</span>
+        </div>
+        <div class="data-line" data-id="l2" data-src="林鐵路線" onclick="pinLine(this)">
+          <span class="dl-icon">🌄</span><span class="dl-text"><b>祝山線</b>：阿里山站 → 祝山站，觀日出用，凌晨加開；<b>沼平線</b>：阿里山 → 沼平，短途；<b>神木線</b>：神木車站附近</span><span class="dl-label">支線</span>
+        </div>
+        <div class="data-line" data-id="l3" data-src="林鐵路線" onclick="pinLine(this)">
+          <span class="dl-icon">🚧</span><span class="dl-text"><b>眠月線</b>：921地震後損毀，目前停駛，分3年修復工程進行中（2025年起）</span><span class="dl-label">眠月線</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">技術特色 <span class="tag tag-yellow">技術</span></div>
+        <div class="data-line" data-id="l4" data-src="林鐵技術" onclick="pinLine(this)">
+          <span class="dl-icon">⚙️</span><span class="dl-text"><b>齒軌鐵路</b>：獨立山段採用 Abt 式齒軌，是目前亞洲少數仍在運行的齒軌鐵路之一</span><span class="dl-label">技術</span>
+        </div>
+        <div class="data-line" data-id="l5" data-src="林鐵技術" onclick="pinLine(this)">
+          <span class="dl-icon">🔀</span><span class="dl-text"><b>路簽閉塞制度</b>：單線區間採人工路簽交換，列車需在特定車站（如交力坪）等候對向列車，方可繼續行駛</span><span class="dl-label">單線運作</span>
+        </div>
+        <div class="data-line" data-id="l6" data-src="林鐵技術" onclick="pinLine(this)">
+          <span class="dl-icon">🌡️</span><span class="dl-text"><b>特殊地形</b>：途經熱帶、亞熱帶、溫帶、寒帶四種氣候帶，沿線生態多樣，但也意味著天候變化大</span><span class="dl-label">地形</span>
+        </div>
+        <div class="data-line" data-id="l7" data-src="林鐵技術" onclick="pinLine(this)">
+          <span class="dl-icon">🔄</span><span class="dl-text"><b>螺旋形路線</b>（獨立山）：列車在山腰繞行三圈爬升，同一棵大樹會在不同高度看到三次——世界僅有的設計</span><span class="dl-label">螺旋線</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">近期重要事件 <span class="tag tag-yellow">時間軸</span></div>
+        <div class="data-line" data-id="l8" data-src="林鐵事件" onclick="pinLine(this)">
+          <span class="dl-icon">✅</span><span class="dl-text"><b>2025年7月6日</b>：嘉義至阿里山全線通車（莫拉克颱風2009年損毀，歷時15年完成修復）</span><span class="dl-label">全線通車</span>
+        </div>
+        <div class="data-line" data-id="l9" data-src="林鐵事件" onclick="pinLine(this)">
+          <span class="dl-icon">⚠️</span><span class="dl-text"><b>2026年3月2日</b>：訂票制度改為「立即付款制」，舊制2天緩衝期取消；每月平均損失逾百萬元後推行新制</span><span class="dl-label">訂票新制</span>
+        </div>
+        <div class="data-line" data-id="l10" data-src="林鐵事件" onclick="pinLine(this)">
+          <span class="dl-icon">🔧</span><span class="dl-text"><b>眠月線修復</b>：2025年起分三年進行，從1號明隧道至塔山站路段</span><span class="dl-label">眠月線</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 林鐵 問題 -->
+    <section id="lintie-issues" class="section">
+      <div class="section-title">阿里山林業鐵路 — 已知問題</div>
+      <div class="section-subtitle">乘客抱怨、結構性問題、與比賽題目的對應點</div>
+
+      <div class="card">
+        <div class="card-title">結構性營運問題 <span class="tag tag-red">高影響</span></div>
+        <div class="data-line" data-id="p1" data-src="林鐵問題" onclick="pinLine(this)">
+          <span class="dl-icon">🚦</span><span class="dl-text"><b>單線班次極少，容錯率極低</b>：本線一天只有4班（上山2班、下山2班）。任一班次延誤，整條線上下行列車的交會時刻全部打亂，且無備用班次可補救</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="p2" data-src="林鐵問題" onclick="pinLine(this)">
+          <span class="dl-icon">⏱️</span><span class="dl-text"><b>交會等候造成延誤連鎖</b>：採路簽閉塞制度，上行列車必須在交力坪等下行列車抵達才能繼續。若對向列車晚了15分鐘，後面所有班次都順延</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="p3" data-src="林鐵問題" onclick="pinLine(this)">
+          <span class="dl-icon">🌧️</span><span class="dl-text"><b>天候影響嚴重</b>：山區天氣變化快，颱風、豪雨常導致班次臨時停駛或取消，且通知機制不即時，旅客常到現場才知道</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="p4" data-src="林鐵問題" onclick="pinLine(this)">
+          <span class="dl-icon">🔧</span><span class="dl-text"><b>機械故障難救援</b>：山區地形特殊，列車故障時救援車上山耗時，等待時間長且旅客資訊空白</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">旅客直接抱怨（PTT / Dcard 整理）<span class="tag tag-red">乘客聲音</span></div>
+        <div class="data-line" data-id="p5" data-src="PTT/Dcard" onclick="pinLine(this)">
+          <span class="dl-icon">😤</span><span class="dl-text">「提前14天就守著搶還是訂不到本線，只能訂支線」——票源極度稀缺，連假更是秒殺</span>
+          <span class="dl-label">訂票問題</span>
+        </div>
+        <div class="data-line" data-id="p6" data-src="PTT/Dcard" onclick="pinLine(this)">
+          <span class="dl-icon">😤</span><span class="dl-text">「按照舊攻略說的先訂再付，結果訂位被自動取消，全程白費」——2026年3月新制讓舊有資訊失效，造成大量旅客困惑</span>
+          <span class="dl-label">訂票新制</span>
+        </div>
+        <div class="data-line" data-id="p7" data-src="PTT/Dcard" onclick="pinLine(this)">
+          <span class="dl-icon">😤</span><span class="dl-text">「到現場才知道班次取消，整個行程炸裂」——延誤/取消的即時通知機制嚴重不足</span>
+          <span class="dl-label">資訊透明</span>
+        </div>
+        <div class="data-line" data-id="p8" data-src="PTT/Dcard" onclick="pinLine(this)">
+          <span class="dl-icon">😤</span><span class="dl-text">「嘉義高鐵站到嘉義林鐵站中間接駁很不方便，行程規劃很難串」——跨運具轉乘資訊整合差</span>
+          <span class="dl-label">跨運具</span>
+        </div>
+        <div class="data-line" data-id="p9" data-src="PTT/Dcard" onclick="pinLine(this)">
+          <span class="dl-icon">😤</span><span class="dl-text">「不知道列車現在到哪了、有沒有誤點」——沒有即時列車追蹤功能，旅客等車完全沒有資訊</span>
+          <span class="dl-label">即時資訊</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">管理/系統問題 <span class="tag tag-yellow">中影響</span></div>
+        <div class="data-line" data-id="p10" data-src="林鐵管理" onclick="pinLine(this)">
+          <span class="dl-icon">📋</span><span class="dl-text"><b>班表排定缺乏彈性</b>：目前班表固定，無法根據即時狀況（天候、人潮）動態調整班次或加開臨時班車</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+        <div class="data-line" data-id="p11" data-src="林鐵管理" onclick="pinLine(this)">
+          <span class="dl-icon">📊</span><span class="dl-text"><b>缺乏延誤預測能力</b>：目前無系統性收集和分析延誤原因數據，無法提前預測哪些路段、哪些時段容易出狀況</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="p12" data-src="林鐵管理" onclick="pinLine(this)">
+          <span class="dl-icon">🗺️</span><span class="dl-text"><b>瓶頸路段未量化</b>：哪些區間最容易造成延誤（交力坪交會、獨立山螺旋線）沒有系統化的分析和模擬數據</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 林鐵 資料 -->
+    <section id="lintie-data" class="section">
+      <div class="section-title">阿里山林業鐵路 — 可用資料</div>
+      <div class="section-subtitle">HackRail 比賽開放資料 + 外部可取得資料</div>
+
+      <div class="card">
+        <div class="card-title">HackRail 開放資料集 <span class="tag tag-green">比賽資料</span></div>
+        <table class="info-table">
+          <tr><th>資料集名稱</th><th>內容</th><th>細度</th><th>可做什麼</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '林鐵承載率', '月度彙整，有季節性旅運趨勢，可做連假需求預測、承載分析')">
+            <td>林業鐵路承載率</td>
+            <td>各路段/班次承載情形</td>
+            <td><span class="sev sev-med">月度</span></td>
+            <td>季節性趨勢、假日需求預測</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">外部可取得資料 <span class="tag tag-yellow">補充資料</span></div>
+        <table class="info-table">
+          <tr><th>資料來源</th><th>內容</th><th>用途</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '林鐵官網時刻表', '現行班次、交會站點資訊，可用於建立班次模型')">
+            <td>林鐵官網時刻表</td>
+            <td>班次、票價、路線圖</td>
+            <td>建立班次基礎模型</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'PTT/Dcard旅客評論', '乘客第一手體驗，延誤、訂票、資訊問題，可做質性分析')">
+            <td>PTT / Dcard 旅客評論</td>
+            <td>延誤投訴、訂票困難、體驗評價</td>
+            <td>質性問題識別</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '中央氣象署歷史天候', '山區降雨、颱風、能見度歷史資料，可分析天候與延誤的相關性')">
+            <td>中央氣象署歷史天候</td>
+            <td>阿里山站歷史降雨、颱風紀錄</td>
+            <td>天候-延誤相關性分析</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '林鐵網路訂票系統', '可觀察票務開放時間、售罄速度，間接推算需求量')">
+            <td>林鐵網路訂票系統</td>
+            <td>票務狀態（售罄/剩餘）</td>
+            <td>需求強度推估</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">資料缺口（無法取得）<span class="tag tag-red">限制</span></div>
+        <div class="data-line" data-id="d1" data-src="林鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">班次實際準點/延誤紀錄（分鐘級）——林鐵無公開即時運行數據</span>
+        </div>
+        <div class="data-line" data-id="d2" data-src="林鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">交會站等候時間紀錄——路簽交換的等候時間未有公開數據</span>
+        </div>
+        <div class="data-line" data-id="d3" data-src="林鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">車輛維修/故障記錄——無開放資料，需透過比賽申請</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 糖鐵 現狀 -->
+    <section id="tangtie-overview" class="section">
+      <div class="section-title">台糖糖業鐵路（五分仔車）— 基本現狀</div>
+      <div class="section-subtitle">百年糖業鐵路，目前以觀光園區為主要型態</div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="stat-box"><div class="val">5</div><div class="lbl">現存觀光糖廠（含暫停1處）</div></div>
+        <div class="stat-box"><div class="val">762mm</div><div class="lbl">軌距（標準鐵路的一半，故稱五分）</div></div>
+        <div class="stat-box"><div class="val">16.1km</div><div class="lbl">虎尾廠唯一存活的製糖運輸路線長度</div></div>
+        <div class="stat-box"><div class="val">NT$150</div><div class="lbl">溪湖糖廠觀光車票（成人）</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">現存觀光糖廠一覽 <span class="tag tag-yellow">各廠現況</span></div>
+        <table class="info-table">
+          <tr><th>糖廠</th><th>位置</th><th>現況</th><th>特色</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '溪湖糖廠', '假日彩繪五分車，平日可預約，彰化旅遊熱點，運作最穩定')">
+            <td><b>溪湖糖廠</b></td><td>彰化溪湖</td><td><span class="sev sev-high">正常營運</span></td><td>假日彩繪小火車，親子熱點</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '烏樹林糖廠', '台南後壁，2002年恢復觀光，有完整車站及文化展示')">
+            <td><b>烏樹林糖廠</b></td><td>台南後壁</td><td><span class="sev sev-high">正常營運</span></td><td>文化展示，原汁原味保存</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '橋頭糖廠', '高雄橋頭，鄰近捷運站，交通便利，台灣第一座糖廠')">
+            <td><b>橋頭糖廠</b></td><td>高雄橋頭</td><td><span class="sev sev-high">正常營運</span></td><td>鄰近捷運橋頭糖廠站</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '蒜頭糖廠', '嘉義六腳，2022年曾發生出軌事故，安全問題值得關注')">
+            <td><b>蒜頭糖廠</b></td><td>嘉義六腳</td><td><span class="sev sev-med">正常營運</span></td><td>2022年曾出軌，安全疑慮</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '新營糖廠', '台南新營，目前暫停營運，原因不明')">
+            <td><b>新營糖廠</b></td><td>台南新營</td><td><span class="sev sev-high" style="background:rgba(247,95,95,0.2);color:var(--red)">暫停營運</span></td><td>新營鐵道文化園區</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">虎尾製糖運輸線 <span class="tag tag-blue">唯一運輸用途</span></div>
+        <div class="data-line" data-id="t1" data-src="糖鐵虎尾" onclick="pinLine(this)">
+          <span class="dl-icon">🌾</span><span class="dl-text"><b>虎尾馬光厝線</b>（16.1km）：目前台灣唯一仍在運作的製糖運輸糖鐵，甘蔗收成期間（約每年10月至翌年4月）運行</span>
+        </div>
+        <div class="data-line" data-id="t2" data-src="糖鐵虎尾" onclick="pinLine(this)">
+          <span class="dl-icon">📅</span><span class="dl-text">製糖運輸和觀光旅運在目的/時段上完全分開，虎尾以製糖為主，觀光功能次要</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 糖鐵 問題 -->
+    <section id="tangtie-issues" class="section">
+      <div class="section-title">台糖糖業鐵路 — 已知問題</div>
+      <div class="section-subtitle">安全、管理、旅客體驗等面向</div>
+
+      <div class="card">
+        <div class="card-title">安全管理問題（2022年蒜頭出軌事故報告）<span class="tag tag-red">嚴重</span></div>
+        <div class="data-line" data-id="tp1" data-src="TTSB事故報告" onclick="pinLine(this)">
+          <span class="dl-icon">⚠️</span><span class="dl-text"><b>無專責安全組織</b>：台糖總管理處對五分車欠缺專責負責鐵路行車安全的政策、規章、預算、事故調查單位</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="tp2" data-src="TTSB事故報告" onclick="pinLine(this)">
+          <span class="dl-icon">⚠️</span><span class="dl-text"><b>人員訓練不足</b>：新進人員缺乏完整專業職能訓練，第一線人員身兼多職，影響日常巡檢與維修品質</span>
+          <span class="dl-label"><span class="sev sev-high">高</span></span>
+        </div>
+        <div class="data-line" data-id="tp3" data-src="TTSB事故報告" onclick="pinLine(this)">
+          <span class="dl-icon">⚠️</span><span class="dl-text"><b>紙本作業</b>：路線檢查、養護記錄仍以紙本登載，無法即時彙整分析，風險難以提前識別</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+        <div class="data-line" data-id="tp4" data-src="TTSB事故報告" onclick="pinLine(this)">
+          <span class="dl-icon">⚠️</span><span class="dl-text"><b>車載設備故障未修</b>：內燃機車車前 CCTV 故障未即時檢修或更換，安全監控能力缺失</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">旅客體驗問題 <span class="tag tag-yellow">體驗面</span></div>
+        <div class="data-line" data-id="tp5" data-src="旅客體驗" onclick="pinLine(this)">
+          <span class="dl-icon">🕐</span><span class="dl-text"><b>班次與時間資訊不透明</b>：各糖廠網站更新頻率不一，假日加班/停班資訊難以即時掌握，旅客常撲空</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+        <div class="data-line" data-id="tp6" data-src="旅客體驗" onclick="pinLine(this)">
+          <span class="dl-icon">📍</span><span class="dl-text"><b>路線短、體驗單薄</b>：觀光車程多只有10-20分鐘，部分旅客反映「去到比較遠的糖廠，搭車體驗時間太短、不值得」</span>
+          <span class="dl-label"><span class="sev sev-low">低</span></span>
+        </div>
+        <div class="data-line" data-id="tp7" data-src="旅客體驗" onclick="pinLine(this)">
+          <span class="dl-icon">🎫</span><span class="dl-text"><b>訂票/預約系統不統一</b>：各廠做法不同（現場買票/電話預約/線上），外地旅客不知道要用哪種方式</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+        <div class="data-line" data-id="tp8" data-src="旅客體驗" onclick="pinLine(this)">
+          <span class="dl-icon">🔌</span><span class="dl-text"><b>季節性限制強</b>：部分糖廠只在特定季節或假日營運，旅客常不確定「今天有沒有開」</span>
+          <span class="dl-label"><span class="sev sev-med">中</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 糖鐵 資料 -->
+    <section id="tangtie-data" class="section">
+      <div class="section-title">台糖糖業鐵路 — 可用資料</div>
+      <div class="section-subtitle">HackRail 比賽開放資料 + 外部可取得資料</div>
+
+      <div class="card">
+        <div class="card-title">HackRail 開放資料集 <span class="tag tag-green">比賽資料</span></div>
+        <table class="info-table">
+          <tr><th>資料集</th><th>內容</th><th>細度</th><th>可做什麼</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '台糖五分車營運資料', '月報，含旅客人次、班次、各廠營運狀況，可做需求預測和季節分析')">
+            <td>台糖五分車營運資料</td>
+            <td>各廠旅客人次、班次、收入</td>
+            <td><span class="sev sev-med">月報</span></td>
+            <td>需求預測、季節分析</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">資料缺口 <span class="tag tag-red">限制</span></div>
+        <div class="data-line" data-id="td1" data-src="糖鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">班次準點/延誤記錄——糖廠觀光車沒有即時班次追蹤系統</span>
+        </div>
+        <div class="data-line" data-id="td2" data-src="糖鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">路線維護/養護記錄——目前為紙本，無數位化公開資料</span>
+        </div>
+        <div class="data-line" data-id="td3" data-src="糖鐵資料缺口" onclick="pinLine(this)">
+          <span class="dl-icon">❌</span><span class="dl-text">旅客等待時間/滿意度調查——無系統性收集</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 比賽題目對應 -->
+    <section id="competition" class="section">
+      <div class="section-title">比賽題目 × 林鐵/糖鐵對應分析</div>
+      <div class="section-subtitle">題目主軸：準點率不穩定、缺乏預測/模擬/最佳化能力、旅客資訊不透明</div>
+
+      <div class="card">
+        <div class="card-title">題目拆解對應表 <span class="tag tag-blue">核心</span></div>
+        <table class="info-table">
+          <tr><th>題目要求</th><th>林鐵對應</th><th>糖鐵對應</th><th>可行性</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '延誤預測能力', '林鐵班次少、天候影響大，延誤預測有明確需求和場景；糖鐵問題較不顯著')">
+            <td>延誤預測能力</td>
+            <td>✅ 強需求：班次少、天候影響大，一延誤影響全線</td>
+            <td>⚠️ 弱：班次本身不多，延誤非主要痛點</td>
+            <td><span class="sev sev-high">林鐵優先</span></td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '瓶頸路段模擬', '林鐵交力坪交會站、獨立山螺旋線是明確瓶頸；糖鐵無此問題')">
+            <td>瓶頸路段模擬</td>
+            <td>✅ 強需求：交力坪交會站、獨立山螺旋線是明確瓶頸</td>
+            <td>❌ 不適用：路線短、無複雜路網</td>
+            <td><span class="sev sev-high">林鐵專屬</span></td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '班表最佳化', '林鐵班次固定無彈性；糖鐵假日班次也有最佳化空間')">
+            <td>班表最佳化</td>
+            <td>✅ 強需求：固定班表無法應對天候、人潮變化</td>
+            <td>⚠️ 中：假日/旺季班次調整有需求</td>
+            <td><span class="sev sev-high">兩者都適合</span></td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '即時旅運資訊透明化', '兩條線都嚴重缺乏即時資訊，旅客體驗差')">
+            <td>即時旅運資訊透明化</td>
+            <td>✅ 強需求：延誤、停班通知嚴重不即時</td>
+            <td>✅ 強需求：各廠資訊分散，旅客常撲空</td>
+            <td><span class="sev sev-high">兩者都強</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">建議方向 <span class="tag tag-green">策略</span></div>
+        <div class="data-line" data-id="c1" data-src="建議" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>林鐵為主體</b>：題目三個核心需求（延誤預測、瓶頸模擬、班表最佳化）在林鐵都有明確場景，資料性分數最高</span>
+        </div>
+        <div class="data-line" data-id="c2" data-src="建議" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>糖鐵為輔</b>：用「資訊透明化」作為兩條線的共通切入點，擴大方案適用範圍</span>
+        </div>
+        <div class="data-line" data-id="c3" data-src="建議" onclick="pinLine(this)">
+          <span class="dl-icon">💡</span><span class="dl-text"><b>創新切入點</b>：現有方案為何沒被採用？林鐵規模小、預算有限，需要的是「輕量化解法」而非大型系統——這才是你們的差異化</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 現有研究 -->
+    <section id="research" class="section">
+      <div class="section-title">現有研究 — 別人做過什麼</div>
+      <div class="section-subtitle">單線鐵路排班、延誤預測、旅客資訊系統的學術研究整理（2016–2025）</div>
+
+      <div class="card">
+        <div class="card-title">單線鐵路排班 & 延誤預測 <span class="tag tag-blue">核心領域</span></div>
+        <table class="info-table">
+          <tr><th>研究</th><th>方法</th><th>年份</th><th>關鍵發現</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Predicting Dispatching Delays (INFORMS)', '最早的低速單線鐵路延誤預測研究，用排隊理論建模，以間接資訊（天候等）預測延誤時間，非直接輸入')">
+            <td><a href="https://pubsonline.informs.org/doi/abs/10.1287/trsc.22.1.31" target="_blank" style="color:var(--accent)">Predicting Dispatching Delays on Single Track Railroad</a></td>
+            <td>排隊理論模型</td>
+            <td><span class="sev sev-med">1988</span></td>
+            <td>用間接資訊（天候）預測延誤，適用低速/稀疏班次路線</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Robust single-track dispatching (ScienceDirect)', '動態隨機環境下的強健排班模型，滾動視窗方案，最小化在不確定條件下的額外延誤')">
+            <td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0191261511000518" target="_blank" style="color:var(--accent)">Robust single-track dispatching under dynamic stochastic environment</a></td>
+            <td>滾動視窗（Rolling Horizon）</td>
+            <td><span class="sev sev-med">2012</span></td>
+            <td>在不確定條件下即時生成交會計畫、最小化額外延誤</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'RL for single-track rescheduling (2016)', '強化學習應用於單線重排班，Q-learning解NP-hard問題，比傳統優化更有效率')">
+            <td><a href="https://ideas.repec.org/a/eee/transb/v86y2016icp250-267.html" target="_blank" style="color:var(--accent)">Reinforcement Learning for single-track rescheduling</a></td>
+            <td>Q-learning（強化學習）</td>
+            <td><span class="sev sev-med">2016</span></td>
+            <td>RL解NP-hard排班問題，計算效率優於混整數規劃</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Gridworld Deep RL for single-track (2023)', '新型格狀世界模型+深度RL，可擴展到複雜單線網路，2023年最新方法')">
+            <td><a href="https://www.researchgate.net/publication/372314987" target="_blank" style="color:var(--accent)">Single-track Scheduling: Gridworld + Deep RL</a></td>
+            <td>深度強化學習（DRL）</td>
+            <td><span class="sev sev-high">2023</span></td>
+            <td>可擴展至複雜單線網路，解決傳統方法規模限制</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Very-short term rescheduling RL (ScienceDirect 2024)', '極短期（即時）重排班，強化學習+單線走廊，2024年最新，平衡計算效率與解品質')">
+            <td><a href="https://www.sciencedirect.com/article/pii/S2210970624000532" target="_blank" style="color:var(--accent)">Very-short term train rescheduling — RL approach</a></td>
+            <td>強化學習（即時決策）</td>
+            <td><span class="sev sev-high">2024</span></td>
+            <td>極短期即時重排班，計算效率與解品質兼顧</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Multi-task Deep RL for rescheduling (2025)', '多任務深度RL，以北京-張家口高鐵真實數據驗證，2025年最新研究')">
+            <td><a href="https://www.sciencedirect.com/article/abs/pii/S1366554524004915" target="_blank" style="color:var(--accent)">Multi-task Deep RL for real-time rescheduling</a></td>
+            <td>多任務深度強化學習</td>
+            <td><span class="sev sev-high">2025</span></td>
+            <td>以北京-張家口高鐵真實資料驗證；最新SOTA</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Timetable Scheduling: Probabilistic Model + Genetic Algorithm (Springer 2025)', '機率模型檢驗+基因演算法，專門針對單線鐵路班表排定，2025發表')">
+            <td><a href="https://link.springer.com/article/10.1007/s13177-025-00500-0" target="_blank" style="color:var(--accent)">Timetable Scheduling: Probabilistic Model Checking + GA</a></td>
+            <td>機率模型 + 基因演算法</td>
+            <td><span class="sev sev-high">2025</span></td>
+            <td>Springer最新，針對單線鐵路班表排定的系統性方法</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Quantum Computing for Railway Dispatching (arxiv 2020)', '量子計算用於鐵路調度和衝突管理，概念驗證，未來方向')">
+            <td><a href="https://arxiv.org/pdf/2010.08227" target="_blank" style="color:var(--accent)">Quantum Computing for Railway Dispatching</a></td>
+            <td>量子計算</td>
+            <td><span class="sev sev-med">2020</span></td>
+            <td>概念驗證，展示量子計算在鐵路調度的潛力</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">旅客資訊系統 & 延誤通知 <span class="tag tag-yellow">旅客體驗</span></div>
+        <table class="info-table">
+          <tr><th>研究</th><th>重點</th><th>年份</th><th>關鍵發現</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Rail Delay and Real-Time Information Psychology (Frontiers 2021)', '延誤與即時資訊的心理影響：即時資訊降低不確定感、增加安全感、提高滿意度，即使班次準點性不變')">
+            <td><a href="https://frontiersin.org/articles/10.3389/fpsyg.2021.619308/full" target="_blank" style="color:var(--accent)">Rail Transport Delay and Real-Time Information</a></td>
+            <td>旅客心理 × 即時資訊</td>
+            <td><span class="sev sev-high">2021</span></td>
+            <td><b>即時資訊本身就能降低旅客焦慮，不必等準點率改善</b>——資訊透明比延誤改善更容易做到且效果顯著</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Machine Learning for Delay Prediction (2022)', '用歷史延誤日誌+機器學習，給調度員提供延誤上下文和預測，輔助決策')">
+            <td><a href="https://doi.org/10.1177/03611981221085561" target="_blank" style="color:var(--accent)">Using Delay Logs and ML to Support Operations</a></td>
+            <td>ML延誤預測輔助調度</td>
+            <td><span class="sev sev-high">2022</span></td>
+            <td>用歷史延誤日誌訓練模型，給調度員即時情境和預測，降低決策壓力</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'Digital Twin + Deep RL for Railway Maintenance (2023)', '數位孿生整合深度強化學習，用於鐵路基礎設施維護，以軌道幾何和元件缺陷資料預測維護需求')">
+            <td><a href="https://www.nature.com/articles/s41598-023-29526-8" target="_blank" style="color:var(--accent)">Digital Twin + Deep RL for Railway Maintenance</a></td>
+            <td>數位孿生 × 維護預測</td>
+            <td><span class="sev sev-high">2023</span></td>
+            <td>數位孿生+RL可大幅降低非計畫性停班，適用資源有限的鐵路機構</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, 'RL for Graph-based Timetable Rescheduling (IEEE TITS 2024)', '圖神經網路+RL，處理複雜路網的班表重排，IEEE頂刊，2024')">
+            <td><a href="https://dl.acm.org/doi/abs/10.1109/TITS.2023.3344468" target="_blank" style="color:var(--accent)">RL for Graph-based Timetable Rescheduling (IEEE TITS)</a></td>
+            <td>圖表示 + RL</td>
+            <td><span class="sev sev-high">2024</span></td>
+            <td>IEEE頂刊；圖神經網路表示鐵路網路，RL解班表重排，可擴展</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">林鐵自身改善動態 <span class="tag tag-green">最新</span></div>
+        <div class="data-line" data-id="r1" data-src="林鐵官方" onclick="pinLine(this)">
+          <span class="dl-icon">🚂</span><span class="dl-text"><b>2024年7月</b>：福森號新型客車投入營運（取代老舊車廂），改善乘坐舒適度</span>
+        </div>
+        <div class="data-line" data-id="r2" data-src="林鐵官方" onclick="pinLine(this)">
+          <span class="dl-icon">🚂</span><span class="dl-text"><b>2026年預計</b>：森里號客車計畫投入本線，進一步更新車隊</span>
+        </div>
+        <div class="data-line" data-id="r3" data-src="林鐵官方" onclick="pinLine(this)">
+          <span class="dl-icon">🔧</span><span class="dl-text"><b>目前改善方向</b>：林鐵官方目前聚焦「車輛更新」和「路線修復」，<b>尚無公開的智慧化/AI/即時資訊系統計畫</b></span>
+        </div>
+        <div class="data-line" data-id="r4" data-src="研究觀察" onclick="pinLine(this)">
+          <span class="dl-icon">💡</span><span class="dl-text"><b>關鍵觀察</b>：現有學術研究以大型高速鐵路為對象（北京-張家口、歐洲城際）；針對小規模觀光齒軌鐵路的輕量化解法，學術文獻幾乎空白</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 研究空白 -->
+    <section id="gap" class="section">
+      <div class="section-title">研究空白 — 為什麼現有方案沒被採用</div>
+      <div class="section-subtitle">這是你們創新切入點的核心問題</div>
+
+      <div class="card">
+        <div class="card-title">現有解法為何沒用在林鐵 <span class="tag tag-red">關鍵問題</span></div>
+        <div class="data-line" data-id="g1" data-src="研究空白" onclick="pinLine(this)">
+          <span class="dl-icon">💰</span><span class="dl-text"><b>成本門檻</b>：現有RL/深度學習解法需要大量歷史數據（數百萬筆班次記錄）和計算資源，林鐵一天4班、資料量極少，套用大型系統根本不划算</span>
+        </div>
+        <div class="data-line" data-id="g2" data-src="研究空白" onclick="pinLine(this)">
+          <span class="dl-icon">📊</span><span class="dl-text"><b>資料稀缺</b>：林鐵每天班次少、數位化程度低，累積的可用訓練資料量遠低於研究論文的假設前提</span>
+        </div>
+        <div class="data-line" data-id="g3" data-src="研究空白" onclick="pinLine(this)">
+          <span class="dl-icon">🏢</span><span class="dl-text"><b>機構規模小</b>：林鐵處的IT預算、人力規模無法支撐複雜系統導入和維護，大型系統即使有效也難落地</span>
+        </div>
+        <div class="data-line" data-id="g4" data-src="研究空白" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>研究對象錯位</b>：所有現有研究針對通勤/城際鐵路（大量班次、高頻率），林鐵是觀光齒軌鐵路（少班次、天候敏感、旅客是一次性觀光客），問題結構根本不同</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">創新機會空間 <span class="tag tag-green">你們的切入點</span></div>
+        <div class="data-line" data-id="g5" data-src="創新機會" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>輕量化延誤預測</b>：不需要百萬筆資料，用歷史天候（可取得）× 承載率（比賽有）× 班次模型（固定班表）建立小樣本預測——這個方向文獻幾乎沒有</span>
+        </div>
+        <div class="data-line" data-id="g6" data-src="創新機會" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>旅客端即時資訊優先</b>：Frontiers 2021研究已證明「即時資訊本身就能顯著提升旅客滿意度」，不必等到準點率改善。成本低、效果顯著，但林鐵至今沒做</span>
+        </div>
+        <div class="data-line" data-id="g7" data-src="創新機會" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>交會站緩衝優化</b>：交力坪交會站的等候緩衝時間設計直接影響延誤連鎖——用現有班表資料模擬「增加多少緩衝才能讓連鎖效應降低X%」，這是可以用公開資料做的</span>
+        </div>
+        <div class="data-line" data-id="g8" data-src="創新機會" onclick="pinLine(this)">
+          <span class="dl-icon">🎯</span><span class="dl-text"><b>觀光客專屬資訊設計</b>：現有研究針對通勤族（每天搭，熟悉路線），觀光客是「一次性用戶」，需要完全不同的資訊設計——這個空白沒人研究過</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DISCUSSION PANEL -->
+  <aside class="discussion-panel">
+    <!-- PANEL TAB BAR -->
+    <div class="panel-tabs">
+      <button class="panel-tab active" id="ptab-discuss" onclick="switchPanelTab('discuss')">
+        💬 討論標注 <span class="dp-count" id="dp-count" style="margin-left:4px">0</span>
+      </button>
+      <button class="panel-tab" id="ptab-gap" onclick="switchPanelTab('gap')">
+        📋 待補充 <span class="gap-count" id="gap-count" style="margin-left:4px">0</span>
+      </button>
+    </div>
+
+    <!-- PANE 1: 討論標注 -->
+    <div class="panel-pane active" id="pane-discuss">
+      <div id="dp-body">
+        <div class="dp-empty" id="dp-empty">
+          <span style="font-size:24px">👆</span>
+          <span>點擊任何資料行</span>
+          <span style="font-size:12px">標註並輸入你的想法</span>
+        </div>
+      </div>
+      <div class="dp-list" id="dp-list" style="display:none"></div>
+      <div class="dp-toolbar">
+        <button class="btn-export" onclick="exportNotes()">匯出筆記</button>
+        <button class="btn-clear" onclick="clearAll()">清除全部</button>
+      </div>
+    </div>
+
+    <!-- PANE 2: 待補充清單 -->
+    <div class="panel-pane" id="pane-gap">
+      <div class="gap-form">
+        <select class="gap-select" id="gap-area">
+          <option value="林鐵現狀">林鐵現狀</option>
+          <option value="林鐵問題">林鐵問題</option>
+          <option value="林鐵資料">林鐵資料</option>
+          <option value="糖鐵現狀">糖鐵現狀</option>
+          <option value="糖鐵問題">糖鐵問題</option>
+          <option value="糖鐵資料">糖鐵資料</option>
+          <option value="現有研究">現有研究</option>
+          <option value="研究空白">研究空白</option>
+          <option value="比賽分析">比賽分析</option>
+          <option value="全局">全局</option>
+        </select>
+        <textarea class="gap-input" id="gap-desc" placeholder="描述缺少什麼資料（例如：林鐵2024年各月實際準點率統計）"></textarea>
+        <button class="btn-add" onclick="addGap()">＋ 新增待補充項目</button>
+      </div>
+      <div class="gap-list" id="gap-list">
+        <div class="gap-empty" id="gap-empty">
+          <span style="font-size:22px">📋</span>
+          <span>還沒有待補充項目</span>
+        </div>
+      </div>
+      <div class="dp-toolbar">
+        <button class="btn-export" onclick="exportGaps()">匯出清單給 Claude</button>
+        <button class="btn-clear" onclick="clearGaps()">清除已完成</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const STORAGE_KEY = 'hackrail_notes';
+const GAP_KEY = 'hackrail_gaps';
+let notes = {};
+let gaps = {};
+
+// ── PANEL TAB SWITCH ──
+function switchPanelTab(name) {
+  document.querySelectorAll('.panel-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  document.getElementById('ptab-' + name).classList.add('active');
+}
+
+// ── GAP (待補充) FUNCTIONS ──
+function loadGaps() {
+  try {
+    const raw = localStorage.getItem(GAP_KEY);
+    if (raw) gaps = JSON.parse(raw);
+    renderGaps();
+  } catch(e) {}
+}
+
+function saveGaps() {
+  localStorage.setItem(GAP_KEY, JSON.stringify(gaps));
+}
+
+function addGap() {
+  const area = document.getElementById('gap-area').value;
+  const desc = document.getElementById('gap-desc').value.trim();
+  if (!desc) { document.getElementById('gap-desc').focus(); return; }
+  const id = 'gap_' + Date.now();
+  gaps[id] = { area, desc, status: 'pending', ts: Date.now() };
+  document.getElementById('gap-desc').value = '';
+  saveGaps();
+  renderGaps();
+}
+
+function toggleGap(id) {
+  if (!gaps[id]) return;
+  gaps[id].status = gaps[id].status === 'done' ? 'pending' : 'done';
+  saveGaps();
+  renderGaps();
+}
+
+function deleteGap(id) {
+  delete gaps[id];
+  saveGaps();
+  renderGaps();
+}
+
+function clearGaps() {
+  Object.keys(gaps).forEach(id => { if (gaps[id].status === 'done') delete gaps[id]; });
+  saveGaps();
+  renderGaps();
+}
+
+function renderGaps() {
+  const all = Object.entries(gaps);
+  const pending = all.filter(([,v]) => v.status === 'pending').length;
+  document.getElementById('gap-count').textContent = pending || all.length;
+
+  const list = document.getElementById('gap-list');
+  const empty = document.getElementById('gap-empty');
+
+  if (all.length === 0) {
+    empty.style.display = 'flex';
+    list.innerHTML = '';
+    list.appendChild(empty);
+    return;
+  }
+
+  empty.style.display = 'none';
+  // Sort: pending first
+  const sorted = all.sort(([,a],[,b]) => {
+    if (a.status !== b.status) return a.status === 'pending' ? -1 : 1;
+    return b.ts - a.ts;
+  });
+
+  list.innerHTML = '';
+  sorted.forEach(([id, item]) => {
+    const div = document.createElement('div');
+    div.className = 'gap-item' + (item.status === 'done' ? ' done' : '');
+    div.innerHTML = `
+      <span class="gap-area-tag">${item.area}</span>
+      <div class="gap-desc">${item.desc}</div>
+      <div class="gap-actions">
+        <button class="btn-done ${item.status === 'done' ? 'undone' : ''}" onclick="toggleGap('${id}')">
+          ${item.status === 'done' ? '↩ 復原' : '✓ 已補充'}
+        </button>
+        <button class="btn-sm danger" onclick="deleteGap('${id}')">刪除</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function exportGaps() {
+  const pending = Object.values(gaps).filter(g => g.status === 'pending');
+  if (pending.length === 0) { alert('目前沒有待補充項目'); return; }
+  const lines = ['# HackRail 待補充資料清單\n', `> 匯出時間：${new Date().toLocaleString()}\n`];
+  const byArea = {};
+  pending.forEach(g => {
+    if (!byArea[g.area]) byArea[g.area] = [];
+    byArea[g.area].push(g.desc);
+  });
+  Object.entries(byArea).forEach(([area, descs]) => {
+    lines.push(`## ${area}`);
+    descs.forEach(d => lines.push(`- [ ] ${d}`));
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hackrail_gaps.md';
+  a.click();
+}
+
+// ── NOTES STORAGE ──
+
+// Load from localStorage
+function loadNotes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) notes = JSON.parse(raw);
+    Object.keys(notes).forEach(id => restorePin(id));
+    renderPanel();
+  } catch(e) {}
+}
+
+function saveNotes() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
+
+// Tab switching
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// Pin a data-line
+function pinLine(el) {
+  const id = el.dataset.id;
+  const src = el.dataset.src || '';
+  const text = el.querySelector('.dl-text')?.innerText || el.innerText;
+
+  if (notes[id]) {
+    // Already pinned — just focus
+    document.getElementById('note-' + id)?.focus();
+    return;
+  }
+
+  notes[id] = { text: text.trim(), src, note: '', type: 'line' };
+  el.classList.add('pinned');
+  saveNotes();
+  renderPanel();
+}
+
+// Pin a table row
+function pinTableRow(el, label, desc) {
+  const id = 'tr_' + label.replace(/\s/g,'_');
+  if (notes[id]) {
+    document.getElementById('note-' + id)?.focus();
+    return;
+  }
+  notes[id] = { text: label + '：' + desc, src: '', note: '', type: 'row' };
+  el.classList.add('pinned');
+  saveNotes();
+  renderPanel();
+}
+
+function restorePin(id) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) el.classList.add('pinned');
+  // Table rows
+  document.querySelectorAll('.clickable-row').forEach(tr => {
+    const trId = 'tr_' + (tr.cells[0]?.innerText || '').replace(/\s/g,'_');
+    if (trId === id) tr.classList.add('pinned');
+  });
+}
+
+function renderPanel() {
+  const count = Object.keys(notes).length;
+  document.getElementById('dp-count').textContent = count;
+
+  if (count === 0) {
+    document.getElementById('dp-empty').style.display = 'flex';
+    document.getElementById('dp-list').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('dp-empty').style.display = 'none';
+  document.getElementById('dp-list').style.display = 'flex';
+
+  const list = document.getElementById('dp-list');
+  list.innerHTML = '';
+
+  Object.entries(notes).forEach(([id, item]) => {
+    const div = document.createElement('div');
+    div.className = 'dp-item';
+    div.innerHTML = `
+      <div class="dp-item-text">${item.text}</div>
+      ${item.src ? `<div class="dp-item-source">來源：${item.src}</div>` : ''}
+      <textarea class="dp-notes" id="note-${id}" placeholder="輸入你的想法、問題、策略..." rows="3"
+        oninput="updateNote('${id}', this.value)">${item.note}</textarea>
+      <div class="dp-item-actions">
+        <button class="btn-sm danger" onclick="removePin('${id}')">移除</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function updateNote(id, val) {
+  if (notes[id]) {
+    notes[id].note = val;
+    saveNotes();
+  }
+}
+
+function removePin(id) {
+  delete notes[id];
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) el.classList.remove('pinned');
+  document.querySelectorAll('.clickable-row').forEach(tr => {
+    const trId = 'tr_' + (tr.cells[0]?.innerText || '').replace(/\s/g,'_');
+    if (trId === id) tr.classList.remove('pinned');
+  });
+  saveNotes();
+  renderPanel();
+}
+
+function clearAll() {
+  if (!confirm('確定清除所有標註和筆記？')) return;
+  notes = {};
+  localStorage.removeItem(STORAGE_KEY);
+  document.querySelectorAll('.pinned').forEach(el => el.classList.remove('pinned'));
+  renderPanel();
+}
+
+function exportNotes() {
+  const lines = ['# HackRail 研究筆記\n'];
+  Object.values(notes).forEach(item => {
+    lines.push(`## ${item.text}`);
+    if (item.src) lines.push(`> 來源：${item.src}`);
+    if (item.note) lines.push(`\n${item.note}`);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hackrail_notes.md';
+  a.click();
+}
+
+loadNotes();
+loadGaps();
+</script>
+</body>
+</html>
