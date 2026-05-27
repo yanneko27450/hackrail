@@ -146,6 +146,39 @@
     .grid-2 { grid-template-columns: 1fr; }
     .discussion-panel { width: 260px; }
   }
+
+  /* ── 暱稱欄 ── */
+  .nickname-bar { padding: 7px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; background: var(--surface2); flex-shrink: 0; }
+  .nickname-label { font-size: 10px; color: var(--muted); flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .nickname-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; padding: 4px 7px; outline: none; min-width: 0; }
+  .nickname-input:focus { border-color: var(--accent); }
+  .btn-nick { background: var(--accent); color: #fff; border: none; border-radius: 4px; font-size: 11px; padding: 4px 10px; cursor: pointer; flex-shrink: 0; }
+
+  /* ── 訊息列表 ── */
+  .msg-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .msg-empty-chat { display: flex; align-items: center; justify-content: center; flex: 1; color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
+  .msg-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+  .msg-item.own { border-left: 2px solid var(--accent); }
+  .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .msg-name { font-size: 12px; font-weight: 600; }
+  .msg-time { font-size: 10px; color: var(--muted); margin-left: auto; }
+  .msg-ref { font-size: 11px; color: var(--muted); background: var(--bg); border-left: 2px solid var(--accent2); padding: 4px 8px; border-radius: 3px; margin-bottom: 6px; line-height: 1.5; }
+  .msg-ref b { color: var(--accent2); }
+  .msg-body { font-size: 12px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+  /* ── 引用預覽 ── */
+  .quote-bar { padding: 5px 10px; background: rgba(79,142,247,0.08); border-top: 1px solid var(--border); display: flex; align-items: flex-start; gap: 6px; flex-shrink: 0; }
+  .quote-label { font-size: 10px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+  .quote-preview { font-size: 11px; color: var(--muted); flex: 1; line-height: 1.4; max-height: 36px; overflow: hidden; }
+  .btn-clear-quote { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; flex-shrink: 0; padding: 0 2px; }
+  .btn-clear-quote:hover { color: var(--red); }
+
+  /* ── 訊息輸入 ── */
+  .msg-input-bar { padding: 8px 10px; border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+  .msg-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; padding: 7px 9px; outline: none; font-family: inherit; resize: none; line-height: 1.5; }
+  .msg-input:focus { border-color: var(--accent); }
+  .btn-send { background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 12px; padding: 7px 13px; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; font-weight: 600; }
+  .btn-send:hover { opacity: 0.85; }
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -853,26 +886,35 @@
     <!-- PANEL TAB BAR -->
     <div class="panel-tabs">
       <button class="panel-tab active" id="ptab-discuss" onclick="switchPanelTab('discuss')">
-        💬 討論標注 <span class="dp-count" id="dp-count" style="margin-left:4px">0</span>
+        💬 綜合討論 <span class="dp-count" id="dp-count" style="margin-left:4px">0</span>
       </button>
       <button class="panel-tab" id="ptab-gap" onclick="switchPanelTab('gap')">
         📋 待補充 <span class="gap-count" id="gap-count" style="margin-left:4px">0</span>
       </button>
     </div>
 
-    <!-- PANE 1: 討論標注 -->
+    <!-- PANE 1: 綜合討論 -->
     <div class="panel-pane active" id="pane-discuss">
-      <div id="dp-body">
-        <div class="dp-empty" id="dp-empty">
-          <span style="font-size:24px">👆</span>
-          <span>點擊任何資料行</span>
-          <span style="font-size:12px">標註並輸入你的想法</span>
-        </div>
+      <div class="nickname-bar">
+        <span class="nickname-label">暱稱</span>
+        <input class="nickname-input" id="nickname-input" placeholder="設定你的暱稱..." maxlength="16"
+          onkeydown="if(event.key==='Enter')saveNickname()">
+        <button class="btn-nick" id="btn-nick" onclick="saveNickname()">設定</button>
+        <button class="btn-nick" style="background:var(--green);margin-left:2px" onclick="exportMsgs()" title="匯出討論給 AI">📥</button>
+        <button class="btn-nick" style="background:var(--red);margin-left:2px" onclick="clearMsgs()" title="清空所有討論">🗑️</button>
       </div>
-      <div class="dp-list" id="dp-list" style="display:none"></div>
-      <div class="dp-toolbar">
-        <button class="btn-export" onclick="exportNotes()">匯出筆記</button>
-        <button class="btn-clear" onclick="clearAll()">清除全部</button>
+      <div class="msg-list" id="msg-list">
+        <div class="msg-empty-chat" id="msg-empty">還沒有討論<br><span style="font-size:11px;margin-top:4px;display:block">點選資料行引用，或直接輸入開始討論</span></div>
+      </div>
+      <div class="quote-bar" id="quote-bar" style="display:none">
+        <span class="quote-label">引用</span>
+        <span class="quote-preview" id="quote-preview"></span>
+        <button class="btn-clear-quote" onclick="clearQuote()" title="取消引用">×</button>
+      </div>
+      <div class="msg-input-bar">
+        <textarea class="msg-input" id="msg-input" placeholder="輸入討論內容... (Enter 送出，Shift+Enter 換行)" rows="2"
+          onkeydown="handleMsgKey(event)"></textarea>
+        <button class="btn-send" onclick="sendMsg()">送出</button>
       </div>
     </div>
 
@@ -923,37 +965,145 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let notes = {};
 let gaps = {};
+let currentQuote = null;
+let myUid = null;
 
-// ── 連線狀態顯示 ──
-function setStatus(msg, color) {
-  let bar = document.getElementById('sync-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'sync-bar';
-    bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:11px;padding:3px;z-index:999;transition:opacity 0.5s';
-    document.body.appendChild(bar);
-  }
-  bar.textContent = msg;
-  bar.style.background = color;
-  bar.style.opacity = '1';
-  if (color === '#3ecf8e') setTimeout(() => bar.style.opacity = '0', 2000);
+// ── 顏色（依 UID hash）──
+function getColor(uid) {
+  const colors = ['#4f8ef7','#3ecf8e','#f7c948','#f472b6','#a78bfa','#fb923c','#34d399','#60a5fa'];
+  let h = 0;
+  for (let i = 0; i < uid.length; i++) h = uid.charCodeAt(i) + ((h << 5) - h);
+  return colors[Math.abs(h) % colors.length];
 }
 
-// ── PANEL TAB SWITCH ──
+// ── 暱稱 ──
+function getNickname() {
+  return localStorage.getItem('hackrail_nickname') || '';
+}
+function saveNickname() {
+  const val = document.getElementById('nickname-input').value.trim();
+  if (!val) return;
+  localStorage.setItem('hackrail_nickname', val);
+  const btn = document.getElementById('btn-nick');
+  btn.textContent = '✓ 已設定';
+  setTimeout(() => btn.textContent = '設定', 2000);
+}
+
+// ── 引用 ──
+function setQuote(id, text, src) {
+  currentQuote = { id, text, src };
+  const preview = (src ? '[' + src + '] ' : '') + text.substring(0, 120) + (text.length > 120 ? '…' : '');
+  document.getElementById('quote-preview').textContent = preview;
+  document.getElementById('quote-bar').style.display = 'flex';
+  switchPanelTab('discuss');
+  setTimeout(() => document.getElementById('msg-input').focus(), 50);
+}
+function clearQuote() {
+  currentQuote = null;
+  document.getElementById('quote-bar').style.display = 'none';
+  document.getElementById('quote-preview').textContent = '';
+}
+
+// ── 發送訊息 ──
+function sendMsg() {
+  const text = document.getElementById('msg-input').value.trim();
+  if (!text) { document.getElementById('msg-input').focus(); return; }
+  if (!myUid) { alert('Firebase 尚未連線，請稍候再試'); return; }
+  const nick = getNickname();
+  if (!nick) {
+    document.getElementById('nickname-input').focus();
+    document.getElementById('nickname-input').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('nickname-input').style.borderColor = '', 1500);
+    alert('請先設定你的暱稱');
+    return;
+  }
+  const msg = { uid: myUid, nickname: nick, text, ts: Date.now() };
+  if (currentQuote) {
+    msg.refId = currentQuote.id || '';
+    msg.refText = currentQuote.text.substring(0, 150);
+    msg.refSrc = currentQuote.src || '';
+  }
+  db.ref('messages').push(msg);
+  document.getElementById('msg-input').value = '';
+  clearQuote();
+}
+function handleMsgKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+// ── 時間格式化 ──
+function formatTime(ts) {
+  const d = new Date(ts), now = new Date(), diff = now - d;
+  if (diff < 60000) return '剛剛';
+  if (diff < 3600000) return Math.floor(diff/60000) + ' 分前';
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+    d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── 渲染訊息 ──
+function renderMsgs(data) {
+  const list = document.getElementById('msg-list');
+  const empty = document.getElementById('msg-empty');
+  const entries = data ? Object.entries(data).sort(([,a],[,b]) => a.ts - b.ts) : [];
+  document.getElementById('dp-count').textContent = entries.length || '';
+  if (entries.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  const atBottom = list.scrollHeight - list.scrollTop <= list.clientHeight + 60;
+  list.innerHTML = '';
+  entries.forEach(([id, msg]) => {
+    const isOwn = msg.uid === myUid;
+    const color = getColor(msg.uid);
+    const div = document.createElement('div');
+    div.className = 'msg-item' + (isOwn ? ' own' : '');
+    const refHtml = msg.refText
+      ? '<div class="msg-ref">' + (msg.refSrc ? '<b>[' + msg.refSrc + ']</b> ' : '') +
+        msg.refText.replace(/</g,'&lt;') + '</div>' : '';
+    const bodyHtml = msg.text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    div.innerHTML =
+      '<div class="msg-header">' +
+        '<span class="msg-name" style="color:' + color + '">' + (msg.nickname || '匿名') + '</span>' +
+        '<span class="msg-time">' + formatTime(msg.ts) + '</span>' +
+      '</div>' + refHtml +
+      '<div class="msg-body">' + bodyHtml + '</div>';
+    list.appendChild(div);
+  });
+  if (atBottom) list.scrollTop = list.scrollHeight;
+}
+
+// ── 點選資料行 → 引用到討論 ──
+function pinLine(el) {
+  const src = el.dataset.src || '';
+  const text = el.querySelector('.dl-text')?.innerText || el.innerText;
+  setQuote(el.dataset.id, text.trim(), src);
+}
+function pinTableRow(el, label, desc) {
+  setQuote('tr_' + label.replace(/\s/g,'_'), label + '：' + desc, '');
+}
+
+// ── Tab 切換 ──
 function switchPanelTab(name) {
   document.querySelectorAll('.panel-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('pane-' + name).classList.add('active');
   document.getElementById('ptab-' + name).classList.add('active');
 }
-
-// ── GAP 函數 ──
-function saveGaps() {
-  db.ref('gaps').set(gaps).catch(e => console.error(e));
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
 }
 
+// ── GAP 函數 ──
+function saveGaps() { db.ref('gaps').set(gaps).catch(e => console.error(e)); }
 function addGap() {
   const area = document.getElementById('gap-area').value;
   const desc = document.getElementById('gap-desc').value.trim();
@@ -963,34 +1113,24 @@ function addGap() {
   document.getElementById('gap-desc').value = '';
   saveGaps();
 }
-
 function toggleGap(id) {
   if (!gaps[id]) return;
   gaps[id].status = gaps[id].status === 'done' ? 'pending' : 'done';
   saveGaps();
 }
-
-function deleteGap(id) {
-  delete gaps[id];
-  saveGaps();
-}
-
+function deleteGap(id) { delete gaps[id]; saveGaps(); }
 function clearGaps() {
   Object.keys(gaps).forEach(id => { if (gaps[id].status === 'done') delete gaps[id]; });
   saveGaps();
 }
-
 function renderGaps() {
   const all = Object.entries(gaps);
   const pending = all.filter(([,v]) => v.status === 'pending').length;
-  document.getElementById('gap-count').textContent = pending || all.length;
+  document.getElementById('gap-count').textContent = pending || (all.length ? all.length : '');
   const list = document.getElementById('gap-list');
   const empty = document.getElementById('gap-empty');
   if (all.length === 0) {
-    empty.style.display = 'flex';
-    list.innerHTML = '';
-    list.appendChild(empty);
-    return;
+    empty.style.display = 'flex'; list.innerHTML = ''; list.appendChild(empty); return;
   }
   empty.style.display = 'none';
   const sorted = all.sort(([,a],[,b]) => {
@@ -1001,166 +1141,93 @@ function renderGaps() {
   sorted.forEach(([id, item]) => {
     const div = document.createElement('div');
     div.className = 'gap-item' + (item.status === 'done' ? ' done' : '');
-    div.innerHTML = `
-      <span class="gap-area-tag">${item.area}</span>
-      <div class="gap-desc">${item.desc}</div>
-      <div class="gap-actions">
-        <button class="btn-done ${item.status === 'done' ? 'undone' : ''}" onclick="toggleGap('${id}')">
-          ${item.status === 'done' ? '↩ 復原' : '✓ 已補充'}
-        </button>
-        <button class="btn-sm danger" onclick="deleteGap('${id}')">刪除</button>
-      </div>
-    `;
+    div.innerHTML =
+      '<span class="gap-area-tag">' + item.area + '</span>' +
+      '<div class="gap-desc">' + item.desc + '</div>' +
+      '<div class="gap-actions">' +
+        '<button class="btn-done ' + (item.status === 'done' ? 'undone' : '') + '" onclick="toggleGap(\'' + id + '\')">' +
+          (item.status === 'done' ? '↩ 復原' : '✓ 已補充') + '</button>' +
+        '<button class="btn-sm danger" onclick="deleteGap(\'' + id + '\')">刪除</button>' +
+      '</div>';
     list.appendChild(div);
   });
 }
-
 function exportGaps() {
   const pending = Object.values(gaps).filter(g => g.status === 'pending');
   if (pending.length === 0) { alert('目前沒有待補充項目'); return; }
-  const lines = ['# HackRail 待補充資料清單\n', `> 匯出時間：${new Date().toLocaleString()}\n`];
+  const lines = ['# HackRail 待補充資料清單\n', '> 匯出時間：' + new Date().toLocaleString() + '\n'];
   const byArea = {};
-  pending.forEach(g => {
-    if (!byArea[g.area]) byArea[g.area] = [];
-    byArea[g.area].push(g.desc);
-  });
+  pending.forEach(g => { if (!byArea[g.area]) byArea[g.area] = []; byArea[g.area].push(g.desc); });
   Object.entries(byArea).forEach(([area, descs]) => {
-    lines.push(`## ${area}`);
-    descs.forEach(d => lines.push(`- [ ] ${d}`));
+    lines.push('## ' + area);
+    descs.forEach(d => lines.push('- [ ] ' + d));
     lines.push('');
   });
   const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'hackrail_gaps.md';
-  a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'hackrail_gaps.md'; a.click();
 }
 
-// ── NOTES 函數 ──
-function saveNotes() {
-  db.ref('notes').set(notes).catch(e => console.error(e));
-}
-
-function switchTab(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
-}
-
-function pinLine(el) {
-  const id = el.dataset.id;
-  const src = el.dataset.src || '';
-  const text = el.querySelector('.dl-text')?.innerText || el.innerText;
-  if (notes[id]) { document.getElementById('note-' + id)?.focus(); return; }
-  notes[id] = { text: text.trim(), src, note: '', type: 'line' };
-  el.classList.add('pinned');
-  saveNotes();
-  renderPanel();
-}
-
-function pinTableRow(el, label, desc) {
-  const id = 'tr_' + label.replace(/\s/g,'_');
-  if (notes[id]) { document.getElementById('note-' + id)?.focus(); return; }
-  notes[id] = { text: label + '：' + desc, src: '', note: '', type: 'row' };
-  el.classList.add('pinned');
-  saveNotes();
-  renderPanel();
-}
-
-function restorePin(id) {
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if (el) el.classList.add('pinned');
-  document.querySelectorAll('.clickable-row').forEach(tr => {
-    const trId = 'tr_' + (tr.cells[0]?.innerText || '').replace(/\s/g,'_');
-    if (trId === id) tr.classList.add('pinned');
+// ── 匯出討論給 AI ──
+function exportMsgs() {
+  db.ref('messages').once('value', snap => {
+    const data = snap.val();
+    if (!data) { alert('目前沒有討論內容'); return; }
+    const entries = Object.values(data).sort((a,b) => a.ts - b.ts);
+    const lines = [
+      '# HackRail 團隊討論紀錄',
+      '> 匯出時間：' + new Date().toLocaleString('zh-TW'),
+      '> 共 ' + entries.length + ' 則訊息',
+      ''
+    ];
+    entries.forEach(msg => {
+      const time = new Date(msg.ts).toLocaleString('zh-TW');
+      lines.push('---');
+      lines.push('**' + (msg.nickname || '匿名') + '** · ' + time);
+      if (msg.refText) {
+        lines.push('> 引用' + (msg.refSrc ? '（' + msg.refSrc + '）' : '') + '：' + msg.refText);
+      }
+      lines.push(msg.text);
+      lines.push('');
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'hackrail_discussion.md';
+    a.click();
   });
 }
 
-function renderPanel() {
-  const count = Object.keys(notes).length;
-  document.getElementById('dp-count').textContent = count;
-  if (count === 0) {
-    document.getElementById('dp-empty').style.display = 'flex';
-    document.getElementById('dp-list').style.display = 'none';
-    return;
+// ── 清空所有討論 ──
+function clearMsgs() {
+  if (!confirm('確定清空所有討論紀錄？此操作不可復原。')) return;
+  db.ref('messages').set(null);
+}
+
+// ── 連線狀態 ──
+function setStatus(msg, color) {
+  let bar = document.getElementById('sync-bar');
+  if (!bar) {
+    bar = document.createElement('div'); bar.id = 'sync-bar';
+    bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:11px;padding:3px;z-index:999;transition:opacity 0.8s';
+    document.body.appendChild(bar);
   }
-  document.getElementById('dp-empty').style.display = 'none';
-  document.getElementById('dp-list').style.display = 'flex';
-  const list = document.getElementById('dp-list');
-  list.innerHTML = '';
-  Object.entries(notes).forEach(([id, item]) => {
-    const div = document.createElement('div');
-    div.className = 'dp-item';
-    div.innerHTML = `
-      <div class="dp-item-text">${item.text}</div>
-      ${item.src ? `<div class="dp-item-source">來源：${item.src}</div>` : ''}
-      <textarea class="dp-notes" id="note-${id}" placeholder="輸入你的想法、問題、策略..." rows="3"
-        oninput="updateNote('${id}', this.value)">${item.note}</textarea>
-      <div class="dp-item-actions">
-        <button class="btn-sm danger" onclick="removePin('${id}')">移除</button>
-      </div>
-    `;
-    list.appendChild(div);
-  });
+  bar.textContent = msg; bar.style.background = color; bar.style.opacity = '1';
+  if (color === '#3ecf8e') setTimeout(() => bar.style.opacity = '0', 2500);
 }
 
-function updateNote(id, val) {
-  if (notes[id]) { notes[id].note = val; saveNotes(); }
-}
-
-function removePin(id) {
-  delete notes[id];
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if (el) el.classList.remove('pinned');
-  document.querySelectorAll('.clickable-row').forEach(tr => {
-    const trId = 'tr_' + (tr.cells[0]?.innerText || '').replace(/\s/g,'_');
-    if (trId === id) tr.classList.remove('pinned');
-  });
-  saveNotes();
-  renderPanel();
-}
-
-function clearAll() {
-  if (!confirm('確定清除所有標註和筆記？')) return;
-  notes = {};
-  db.ref('notes').set(null);
-  document.querySelectorAll('.pinned').forEach(el => el.classList.remove('pinned'));
-  renderPanel();
-}
-
-function exportNotes() {
-  const lines = ['# HackRail 研究筆記\n'];
-  Object.values(notes).forEach(item => {
-    lines.push(`## ${item.text}`);
-    if (item.src) lines.push(`> 來源：${item.src}`);
-    if (item.note) lines.push(`\n${item.note}`);
-    lines.push('');
-  });
-  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'hackrail_notes.md';
-  a.click();
-}
+// ── 初始化暱稱輸入框 ──
+const _savedNick = getNickname();
+if (_savedNick) document.getElementById('nickname-input').value = _savedNick;
 
 // ── Firebase 登入 + 即時監聽 ──
 setStatus('🔄 連線中...', '#4f8ef7');
 auth.signInAnonymously()
   .then(() => {
+    myUid = auth.currentUser.uid;
     setStatus('✅ 已連線，討論即時同步', '#3ecf8e');
-
-    db.ref('notes').on('value', snapshot => {
-      notes = snapshot.val() || {};
-      document.querySelectorAll('.pinned').forEach(el => el.classList.remove('pinned'));
-      Object.keys(notes).forEach(id => restorePin(id));
-      renderPanel();
-    });
-
-    db.ref('gaps').on('value', snapshot => {
-      gaps = snapshot.val() || {};
-      renderGaps();
-    });
+    db.ref('messages').on('value', snap => renderMsgs(snap.val()));
+    db.ref('gaps').on('value', snap => { gaps = snap.val() || {}; renderGaps(); });
   })
   .catch(err => {
     setStatus('⚠️ 離線模式（無法連線 Firebase）', '#f7c948');
