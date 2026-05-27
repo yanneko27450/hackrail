@@ -329,6 +329,18 @@
       <div class="section-title">阿里山林業鐵路 — 可用資料</div>
       <div class="section-subtitle">HackRail 比賽開放資料 + 外部可取得資料</div>
 
+      <div class="card" style="border-left:3px solid var(--green);padding-left:18px;">
+        <div class="card-title">外部資料來源快速連結 <span class="tag tag-green">可直接查閱</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+          <a href="https://afrch.forest.gov.tw/" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🌲 林鐵官網</a>
+          <a href="https://afrts.forest.gov.tw/TI01.aspx" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🎫 訂票系統</a>
+          <a href="https://data.gov.tw/dataset/38129" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">📊 政府開放資料</a>
+          <a href="https://opendata.cwa.gov.tw/" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🌧️ 中央氣象署</a>
+          <a href="https://www.ptt.cc/bbs/Railway/index.html" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">💬 PTT Railway板</a>
+          <a href="https://www.dcard.tw/f/travel" target="_blank" style="color:var(--accent);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">💬 Dcard旅遊</a>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">HackRail 開放資料集 <span class="tag tag-green">比賽資料</span></div>
         <table class="info-table">
@@ -347,22 +359,22 @@
         <table class="info-table">
           <tr><th>資料來源</th><th>內容</th><th>用途</th></tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '林鐵官網時刻表', '現行班次、交會站點資訊，可用於建立班次模型')">
-            <td>林鐵官網時刻表</td>
+            <td><a href="https://afrch.forest.gov.tw/" target="_blank" style="color:var(--accent)">林鐵官網（時刻表 / 班次）</a></td>
             <td>班次、票價、路線圖</td>
             <td>建立班次基礎模型</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, 'PTT/Dcard旅客評論', '乘客第一手體驗，延誤、訂票、資訊問題，可做質性分析')">
-            <td>PTT / Dcard 旅客評論</td>
+            <td><a href="https://www.ptt.cc/bbs/Railway/index.html" target="_blank" style="color:var(--accent)">PTT Railway板</a> / <a href="https://www.dcard.tw/f/travel" target="_blank" style="color:var(--accent)">Dcard 旅遊版</a></td>
             <td>延誤投訴、訂票困難、體驗評價</td>
             <td>質性問題識別</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '中央氣象署歷史天候', '山區降雨、颱風、能見度歷史資料，可分析天候與延誤的相關性')">
-            <td>中央氣象署歷史天候</td>
+            <td><a href="https://opendata.cwa.gov.tw/" target="_blank" style="color:var(--accent)">中央氣象署開放資料平台</a></td>
             <td>阿里山站歷史降雨、颱風紀錄</td>
             <td>天候-延誤相關性分析</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '林鐵網路訂票系統', '可觀察票務開放時間、售罄速度，間接推算需求量')">
-            <td>林鐵網路訂票系統</td>
+            <td><a href="https://afrts.forest.gov.tw/TI01.aspx" target="_blank" style="color:var(--accent)">林鐵網路訂票系統</a></td>
             <td>票務狀態（售罄/剩餘）</td>
             <td>需求強度推估</td>
           </tr>
@@ -400,19 +412,19 @@
         <table class="info-table">
           <tr><th>糖廠</th><th>位置</th><th>現況</th><th>特色</th></tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '溪湖糖廠', '假日彩繪五分車，平日可預約，彰化旅遊熱點，運作最穩定')">
-            <td><b>溪湖糖廠</b></td><td>彰化溪湖</td><td><span class="sev sev-high">正常營運</span></td><td>假日彩繪小火車，親子熱點</td>
+            <td><a href="https://www.taisugar.com.tw/" target="_blank" style="color:var(--text)"><b>溪湖糖廠</b></a></td><td>彰化溪湖</td><td><span class="sev sev-high">正常營運</span></td><td>假日彩繪小火車，親子熱點</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '烏樹林糖廠', '台南後壁，2002年恢復觀光，有完整車站及文化展示')">
-            <td><b>烏樹林糖廠</b></td><td>台南後壁</td><td><span class="sev sev-high">正常營運</span></td><td>文化展示，原汁原味保存</td>
+            <td><a href="https://www.taisugar.com.tw/chinese/Attractions_detail.aspx?n=10048&s=192&p=0" target="_blank" style="color:var(--text)"><b>烏樹林糖廠</b></a></td><td>台南後壁</td><td><span class="sev sev-high">正常營運</span></td><td>文化展示，原汁原味保存</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '橋頭糖廠', '高雄橋頭，鄰近捷運站，交通便利，台灣第一座糖廠')">
-            <td><b>橋頭糖廠</b></td><td>高雄橋頭</td><td><span class="sev sev-high">正常營運</span></td><td>鄰近捷運橋頭糖廠站</td>
+            <td><a href="https://zh.wikipedia.org/zh-tw/%E6%A9%8B%E9%A0%AD%E7%B3%96%E5%BB%A0" target="_blank" style="color:var(--text)"><b>橋頭糖廠</b></a></td><td>高雄橋頭</td><td><span class="sev sev-high">正常營運</span></td><td>鄰近捷運橋頭糖廠站</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '蒜頭糖廠', '嘉義六腳，2022年曾發生出軌事故，安全問題值得關注')">
-            <td><b>蒜頭糖廠</b></td><td>嘉義六腳</td><td><span class="sev sev-med">正常營運</span></td><td>2022年曾出軌，安全疑慮</td>
+            <td><a href="https://www.taisugar.com.tw/chinese/attractions_detail.aspx?n=10048&p=77&s=89" target="_blank" style="color:var(--text)"><b>蒜頭糖廠</b></a></td><td>嘉義六腳</td><td><span class="sev sev-med">正常營運</span></td><td>2022年曾出軌，安全疑慮</td>
           </tr>
           <tr class="clickable-row" onclick="pinTableRow(this, '新營糖廠', '台南新營，目前暫停營運，原因不明')">
-            <td><b>新營糖廠</b></td><td>台南新營</td><td><span class="sev sev-high" style="background:rgba(247,95,95,0.2);color:var(--red)">暫停營運</span></td><td>新營鐵道文化園區</td>
+            <td><a href="https://zh.wikipedia.org/zh-tw/%E6%96%B0%E7%87%9F%E7%B3%96%E5%BB%A0" target="_blank" style="color:var(--text)"><b>新營糖廠</b></a></td><td>台南新營</td><td><span class="sev sev-high" style="background:rgba(247,95,95,0.2);color:var(--red)">暫停營運</span></td><td>新營鐵道文化園區</td>
           </tr>
         </table>
       </div>
@@ -434,7 +446,7 @@
       <div class="section-subtitle">安全、管理、旅客體驗等面向</div>
 
       <div class="card">
-        <div class="card-title">安全管理問題（2022年蒜頭出軌事故報告）<span class="tag tag-red">嚴重</span></div>
+        <div class="card-title">安全管理問題（<a href="https://www.ttsb.gov.tw/ch/home.jsp?id=26&parentpath=0,2" target="_blank" style="color:var(--text)">TTSB 2022年蒜頭出軌事故報告</a>）<span class="tag tag-red">嚴重</span></div>
         <div class="data-line" data-id="tp1" data-src="TTSB事故報告" onclick="pinLine(this)">
           <span class="dl-icon">⚠️</span><span class="dl-text"><b>無專責安全組織</b>：台糖總管理處對五分車欠缺專責負責鐵路行車安全的政策、規章、預算、事故調查單位</span>
           <span class="dl-label"><span class="sev sev-high">高</span></span>
@@ -478,6 +490,17 @@
     <section id="tangtie-data" class="section">
       <div class="section-title">台糖糖業鐵路 — 可用資料</div>
       <div class="section-subtitle">HackRail 比賽開放資料 + 外部可取得資料</div>
+
+      <div class="card" style="border-left:3px solid var(--accent2);padding-left:18px;">
+        <div class="card-title">外部資料來源快速連結 <span class="tag tag-yellow">可直接查閱</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+          <a href="https://www.taisugar.com.tw/" target="_blank" style="color:var(--accent2);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🏭 台糖官網</a>
+          <a href="https://www.taisugar.com.tw/chinese/Attractions_detail.aspx?n=10048&s=192&p=0" target="_blank" style="color:var(--accent2);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🚂 烏樹林園區</a>
+          <a href="https://www.taisugar.com.tw/chinese/attractions_detail.aspx?n=10048&p=77&s=89" target="_blank" style="color:var(--accent2);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">🚂 蒜頭蔗埕文化園區</a>
+          <a href="https://www.ttsb.gov.tw/ch/home.jsp?id=26&parentpath=0,2" target="_blank" style="color:var(--accent2);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">⚠️ TTSB事故報告</a>
+          <a href="https://zh.wikipedia.org/zh-tw/%E8%94%97%E5%9F%95%E7%B7%9A" target="_blank" style="color:var(--accent2);background:var(--surface2);padding:5px 13px;border-radius:6px;border:1px solid var(--border);font-size:12px;text-decoration:none;">📖 蔗埕線 Wiki</a>
+        </div>
+      </div>
 
       <div class="card">
         <div class="card-title">HackRail 開放資料集 <span class="tag tag-green">比賽資料</span></div>
@@ -648,15 +671,52 @@
       </div>
 
       <div class="card">
+        <div class="card-title">台灣本土相關研究與資料 <span class="tag tag-green">本土</span></div>
+        <table class="info-table">
+          <tr><th>研究 / 資料</th><th>對象</th><th>類型</th><th>關鍵內容</th></tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '蒜頭糖廠蔗埕文化園區五分車發展與營運研究（南華大學碩論）', '台灣最直接相關的糖鐵碩士論文，有旅客滿意度調查和觀光化策略分析')">
+            <td><a href="https://nhuir.nhu.edu.tw/bitstream/987654321/28594/1/109NHU00785010-001.pdf" target="_blank" style="color:var(--accent)">蒜頭糖廠五分車發展與營運研究</a></td>
+            <td>蒜頭糖廠（嘉義）</td>
+            <td><span class="sev sev-med">碩士論文</span></td>
+            <td>五分車觀光化策略、旅客滿意度分析（南華大學，2020）</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '台灣糖業發展創意觀光產業經營策略研究（虎尾糖廠）', '以虎尾糖廠為例，糖鐵從製糖轉觀光的策略研究，含 SWOT 分析')">
+            <td><a href="https://ndltd.ncl.edu.tw/handle/24tkv5" target="_blank" style="color:var(--accent)">台灣糖業發展創意觀光產業經營策略研究</a></td>
+            <td>虎尾糖廠</td>
+            <td><span class="sev sev-med">碩士論文</span></td>
+            <td>觀光糖鐵轉型策略，SWOT 分析（台灣碩士論文，NDLTD）</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '糖產業文化資產保存策略研究（溪湖糖廠）', '溪湖糖廠文化資產保存與轉型觀光的學位論文')">
+            <td><a href="https://www.airitilibrary.com/Article/Detail/U0078-2502201617124207" target="_blank" style="color:var(--accent)">糖產業文化資產保存策略研究（溪湖糖廠）</a></td>
+            <td>溪湖糖廠</td>
+            <td><span class="sev sev-med">學位論文</span></td>
+            <td>文化資產保存 × 觀光轉型，溪湖廠個案（華藝圖書館）</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '政府資料開放平台 - 阿里山林業鐵路資料集', 'HackRail 比賽資料的原始政府開放資料來源')">
+            <td><a href="https://data.gov.tw/dataset/38129" target="_blank" style="color:var(--accent)">政府資料開放平台：阿里山林業鐵路資料集</a></td>
+            <td>林業鐵路</td>
+            <td><span class="sev sev-high">政府開放資料</span></td>
+            <td>林鐵政府資料集，HackRail 比賽資料可能的原始來源，確認欄位用</td>
+          </tr>
+          <tr class="clickable-row" onclick="pinTableRow(this, '交通部觀光署林業鐵路介紹', '官方定位林鐵為觀光鐵路，適合在提案中作為政策環境引用')">
+            <td><a href="https://www.taiwan.net.tw/m1.aspx?SNo=0042717" target="_blank" style="color:var(--accent)">交通部觀光署：林業鐵路介紹</a></td>
+            <td>林業鐵路</td>
+            <td><span class="sev sev-high">官方資料</span></td>
+            <td>交通部官方觀光鐵路定位，適合在提案中作為政策環境引用</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
         <div class="card-title">林鐵自身改善動態 <span class="tag tag-green">最新</span></div>
         <div class="data-line" data-id="r1" data-src="林鐵官方" onclick="pinLine(this)">
-          <span class="dl-icon">🚂</span><span class="dl-text"><b>2024年7月</b>：福森號新型客車投入營運（取代老舊車廂），改善乘坐舒適度</span>
+          <span class="dl-icon">🚂</span><span class="dl-text"><b>2024年7月</b>：<a href="https://afrch.forest.gov.tw/" target="_blank" style="color:var(--accent)">福森號（Formosensis）新型客車</a>投入營運（取代老舊車廂），改善乘坐舒適度</span>
         </div>
         <div class="data-line" data-id="r2" data-src="林鐵官方" onclick="pinLine(this)">
           <span class="dl-icon">🚂</span><span class="dl-text"><b>2026年預計</b>：森里號客車計畫投入本線，進一步更新車隊</span>
         </div>
         <div class="data-line" data-id="r3" data-src="林鐵官方" onclick="pinLine(this)">
-          <span class="dl-icon">🔧</span><span class="dl-text"><b>目前改善方向</b>：林鐵官方目前聚焦「車輛更新」和「路線修復」，<b>尚無公開的智慧化/AI/即時資訊系統計畫</b></span>
+          <span class="dl-icon">🔧</span><span class="dl-text"><b>目前改善方向</b>：<a href="https://afrch.forest.gov.tw/" target="_blank" style="color:var(--accent)">林鐵官方</a>目前聚焦「車輛更新」和「路線修復」，<b>尚無公開的智慧化/AI/即時資訊系統計畫</b></span>
         </div>
         <div class="data-line" data-id="r4" data-src="研究觀察" onclick="pinLine(this)">
           <span class="dl-icon">💡</span><span class="dl-text"><b>關鍵觀察</b>：現有學術研究以大型高速鐵路為對象（北京-張家口、歐洲城際）；針對小規模觀光齒軌鐵路的輕量化解法，學術文獻幾乎空白</span>
