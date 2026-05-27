@@ -1500,7 +1500,7 @@ function sendMsg() {
     msg.refText = currentQuote.text.substring(0, 150);
     msg.refSrc = currentQuote.src || '';
   }
-  db.ref('messages').push(msg);
+  db.ref('messages').push(msg).catch(e => { console.error('push failed:', e); alert('訊息送出失敗：' + e.message); });
   document.getElementById('msg-input').value = '';
   clearQuote();
 }
@@ -1522,18 +1522,17 @@ function formatTime(ts) {
 // ── 渲染訊息 ──
 function renderMsgs(data) {
   const list = document.getElementById('msg-list');
-  const empty = document.getElementById('msg-empty');
+  const empty = list.querySelector('.msg-empty-chat');
   const entries = data ? Object.entries(data).sort(([,a],[,b]) => a.ts - b.ts) : [];
   document.getElementById('dp-count').textContent = entries.length || '';
+  // Only remove actual message divs — keep the empty placeholder in the DOM
+  list.querySelectorAll('.msg-item').forEach(el => el.remove());
   if (entries.length === 0) {
-    list.innerHTML = '';
-    list.appendChild(empty);
-    empty.style.display = 'flex';
+    if (empty) empty.style.display = 'flex';
     return;
   }
-  empty.style.display = 'none';
+  if (empty) empty.style.display = 'none';
   const atBottom = list.scrollHeight - list.scrollTop <= list.clientHeight + 60;
-  list.innerHTML = '';
   entries.forEach(([id, msg]) => {
     const isOwn = msg.uid === myUid;
     const color = getColor(msg.uid);
