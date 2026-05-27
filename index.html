@@ -147,6 +147,10 @@
     .discussion-panel { width: 260px; }
   }
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -905,10 +909,37 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'hackrail_notes';
-const GAP_KEY = 'hackrail_gaps';
+// ── FIREBASE 初始化 ──
+const firebaseConfig = {
+  apiKey: "AIzaSyAdSoX_xp-TLHvtd3Pu2gLS-cqIMBx4PSM",
+  authDomain: "hackrail-disc-2026.firebaseapp.com",
+  databaseURL: "https://hackrail-disc-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hackrail-disc-2026",
+  storageBucket: "hackrail-disc-2026.firebasestorage.app",
+  messagingSenderId: "1047555380184",
+  appId: "1:1047555380184:web:87043946a2e2f5dc32d8ad"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
 let notes = {};
 let gaps = {};
+
+// ── 連線狀態顯示 ──
+function setStatus(msg, color) {
+  let bar = document.getElementById('sync-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'sync-bar';
+    bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:11px;padding:3px;z-index:999;transition:opacity 0.5s';
+    document.body.appendChild(bar);
+  }
+  bar.textContent = msg;
+  bar.style.background = color;
+  bar.style.opacity = '1';
+  if (color === '#3ecf8e') setTimeout(() => bar.style.opacity = '0', 2000);
+}
 
 // ── PANEL TAB SWITCH ──
 function switchPanelTab(name) {
@@ -918,17 +949,9 @@ function switchPanelTab(name) {
   document.getElementById('ptab-' + name).classList.add('active');
 }
 
-// ── GAP (待補充) FUNCTIONS ──
-function loadGaps() {
-  try {
-    const raw = localStorage.getItem(GAP_KEY);
-    if (raw) gaps = JSON.parse(raw);
-    renderGaps();
-  } catch(e) {}
-}
-
+// ── GAP 函數 ──
 function saveGaps() {
-  localStorage.setItem(GAP_KEY, JSON.stringify(gaps));
+  db.ref('gaps').set(gaps).catch(e => console.error(e));
 }
 
 function addGap() {
@@ -939,50 +962,41 @@ function addGap() {
   gaps[id] = { area, desc, status: 'pending', ts: Date.now() };
   document.getElementById('gap-desc').value = '';
   saveGaps();
-  renderGaps();
 }
 
 function toggleGap(id) {
   if (!gaps[id]) return;
   gaps[id].status = gaps[id].status === 'done' ? 'pending' : 'done';
   saveGaps();
-  renderGaps();
 }
 
 function deleteGap(id) {
   delete gaps[id];
   saveGaps();
-  renderGaps();
 }
 
 function clearGaps() {
   Object.keys(gaps).forEach(id => { if (gaps[id].status === 'done') delete gaps[id]; });
   saveGaps();
-  renderGaps();
 }
 
 function renderGaps() {
   const all = Object.entries(gaps);
   const pending = all.filter(([,v]) => v.status === 'pending').length;
   document.getElementById('gap-count').textContent = pending || all.length;
-
   const list = document.getElementById('gap-list');
   const empty = document.getElementById('gap-empty');
-
   if (all.length === 0) {
     empty.style.display = 'flex';
     list.innerHTML = '';
     list.appendChild(empty);
     return;
   }
-
   empty.style.display = 'none';
-  // Sort: pending first
   const sorted = all.sort(([,a],[,b]) => {
     if (a.status !== b.status) return a.status === 'pending' ? -1 : 1;
     return b.ts - a.ts;
   });
-
   list.innerHTML = '';
   sorted.forEach(([id, item]) => {
     const div = document.createElement('div');
@@ -1022,23 +1036,11 @@ function exportGaps() {
   a.click();
 }
 
-// ── NOTES STORAGE ──
-
-// Load from localStorage
-function loadNotes() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) notes = JSON.parse(raw);
-    Object.keys(notes).forEach(id => restorePin(id));
-    renderPanel();
-  } catch(e) {}
-}
-
+// ── NOTES 函數 ──
 function saveNotes() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  db.ref('notes').set(notes).catch(e => console.error(e));
 }
 
-// Tab switching
 function switchTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1046,31 +1048,20 @@ function switchTab(id) {
   event.currentTarget.classList.add('active');
 }
 
-// Pin a data-line
 function pinLine(el) {
   const id = el.dataset.id;
   const src = el.dataset.src || '';
   const text = el.querySelector('.dl-text')?.innerText || el.innerText;
-
-  if (notes[id]) {
-    // Already pinned — just focus
-    document.getElementById('note-' + id)?.focus();
-    return;
-  }
-
+  if (notes[id]) { document.getElementById('note-' + id)?.focus(); return; }
   notes[id] = { text: text.trim(), src, note: '', type: 'line' };
   el.classList.add('pinned');
   saveNotes();
   renderPanel();
 }
 
-// Pin a table row
 function pinTableRow(el, label, desc) {
   const id = 'tr_' + label.replace(/\s/g,'_');
-  if (notes[id]) {
-    document.getElementById('note-' + id)?.focus();
-    return;
-  }
+  if (notes[id]) { document.getElementById('note-' + id)?.focus(); return; }
   notes[id] = { text: label + '：' + desc, src: '', note: '', type: 'row' };
   el.classList.add('pinned');
   saveNotes();
@@ -1080,7 +1071,6 @@ function pinTableRow(el, label, desc) {
 function restorePin(id) {
   const el = document.querySelector(`[data-id="${id}"]`);
   if (el) el.classList.add('pinned');
-  // Table rows
   document.querySelectorAll('.clickable-row').forEach(tr => {
     const trId = 'tr_' + (tr.cells[0]?.innerText || '').replace(/\s/g,'_');
     if (trId === id) tr.classList.add('pinned');
@@ -1090,19 +1080,15 @@ function restorePin(id) {
 function renderPanel() {
   const count = Object.keys(notes).length;
   document.getElementById('dp-count').textContent = count;
-
   if (count === 0) {
     document.getElementById('dp-empty').style.display = 'flex';
     document.getElementById('dp-list').style.display = 'none';
     return;
   }
-
   document.getElementById('dp-empty').style.display = 'none';
   document.getElementById('dp-list').style.display = 'flex';
-
   const list = document.getElementById('dp-list');
   list.innerHTML = '';
-
   Object.entries(notes).forEach(([id, item]) => {
     const div = document.createElement('div');
     div.className = 'dp-item';
@@ -1120,10 +1106,7 @@ function renderPanel() {
 }
 
 function updateNote(id, val) {
-  if (notes[id]) {
-    notes[id].note = val;
-    saveNotes();
-  }
+  if (notes[id]) { notes[id].note = val; saveNotes(); }
 }
 
 function removePin(id) {
@@ -1141,7 +1124,7 @@ function removePin(id) {
 function clearAll() {
   if (!confirm('確定清除所有標註和筆記？')) return;
   notes = {};
-  localStorage.removeItem(STORAGE_KEY);
+  db.ref('notes').set(null);
   document.querySelectorAll('.pinned').forEach(el => el.classList.remove('pinned'));
   renderPanel();
 }
@@ -1161,8 +1144,28 @@ function exportNotes() {
   a.click();
 }
 
-loadNotes();
-loadGaps();
+// ── Firebase 登入 + 即時監聽 ──
+setStatus('🔄 連線中...', '#4f8ef7');
+auth.signInAnonymously()
+  .then(() => {
+    setStatus('✅ 已連線，討論即時同步', '#3ecf8e');
+
+    db.ref('notes').on('value', snapshot => {
+      notes = snapshot.val() || {};
+      document.querySelectorAll('.pinned').forEach(el => el.classList.remove('pinned'));
+      Object.keys(notes).forEach(id => restorePin(id));
+      renderPanel();
+    });
+
+    db.ref('gaps').on('value', snapshot => {
+      gaps = snapshot.val() || {};
+      renderGaps();
+    });
+  })
+  .catch(err => {
+    setStatus('⚠️ 離線模式（無法連線 Firebase）', '#f7c948');
+    console.error(err);
+  });
 </script>
 </body>
 </html>
